@@ -1,0 +1,38 @@
+services:
+  mysqldb:
+    image: mysql:8.0
+    container_name: mysqldb
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: admin123
+      MYSQL_DATABASE: userdb
+      MYSQL_USER: user
+      MYSQL_PASSWORD: admin123
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  flask-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    entrypoint: ["python", "app.py"]
+    container_name: flask-app
+    restart: always
+    depends_on:
+      mysqldb:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysqldb
+      DB_NAME: userdb
+      DB_USER: user
+      DB_PASSWORD: admin123
+    volumes:
+      - ./app:/app
+
+volumes:
+  mysql_data:
